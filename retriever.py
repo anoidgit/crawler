@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from urllib.request import Request, urlopen
+from urllib.parse import quote, unquote
 
 from gzip import decompress as ungzip
 
-from custom_filter import is_WebPage
+from customer import is_WebPage
 
 from coder import decBytes
 
@@ -39,8 +40,9 @@ def getHeaders(url):
 		"Accept-Encoding": "gzip, deflate, br" \
 		"Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"}, proto_prefix, host
 
-def getData(url, timeout = 3, retry = 1):
+def getData(url, timeout = 3.0, retry = 1):
 	heads, proto_prefix, host = getHeaders(url)
+	url = quote(url)
 	req = Request(url, headers = heads)
 	real_url = url
 	infos = None
@@ -59,7 +61,7 @@ def getData(url, timeout = 3, retry = 1):
 			if (data is not None) and (http_code < 400):
 				break
 
-	return data, proto_prefix, host, real_url, http_code, infos
+	return data, proto_prefix, host, unquote(real_url), http_code, infos
 
 def getURL(url):
 
