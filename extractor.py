@@ -14,9 +14,10 @@ class URLParser(HTMLParser):
 	def handle_starttag(self, tag, attrs):
 		if legal_Tag(tag):
 			for key, value in attrs:
-				tmp = unquote(value)
-				if (key == "href") and (tmp not in self.urls):
-					self.urls.add(tmp)
+				if key == "href":
+					tmp = unquote(value)
+					if tmp not in self.urls:
+						self.urls.add(tmp)
 
 	def clear_urls(self):
 		self.urls.clear()
