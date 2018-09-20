@@ -13,7 +13,7 @@ Retrieve the webpage of given URL.
 ## extractor
 Extract links from given webpage.
 
-## Saver
+## saver
 Save the data downloaded.
 
 ## spider
