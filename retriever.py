@@ -6,6 +6,8 @@ from gzip import decompress as ungzip
 
 from custom_filter import is_WebPage
 
+from coder import decBytes
+
 def getHost(url):
 
 	proto_prefix = ""
