@@ -6,14 +6,15 @@ from urllib.parse import unquote
 
 from os.path import exists as checkFS
 
-from customer import seeds, num_Process, num_threads, pwork, logger, todoPoolf, donePoolf
+from customer import seeds, num_Process, num_threads, pwork, logger, todoPoolf, donePoolf, cachePoolf, failPoolf
 
 from spider import Spider
 
 def dumpPool(dValue, dLock, lock_Timeout = 3.0):
-	def write_iter(fname, it, lck):
+
+	def write_iter(fname, it, lck, wrtm = "w"):
 		if it:
-			with open(fname, "w") as f:
+			with open(fname, wrtm) as f:
 				if lck.acquire(block=True, timeout = lock_Timeout):
 					for tmp in it:
 						f.write(tmp.encode("utf-8", "ignore"))
@@ -21,12 +22,18 @@ def dumpPool(dValue, dLock, lock_Timeout = 3.0):
 					lck.release()
 				else:
 					logger.info("Nest: Fail to dump the Pool.")
+
 	logger.info("Nest: dump to-do pool")
-	write_iter(pwork + "todo.pool", dValue["todoPool"], dLock["todoPool"])
+	write_iter(todoPoolf, dValue["todoPool"], dLock["todoPool"])
 	logger.info("Nest: dump done pool")
-	write_iter(pwork + "done.pool", dValue["donePool"], dLock["donePool"])
+	write_iter(donePoolf, dValue["donePool"], dLock["donePool"])
+	logger.info("Nest: dump cache pool")
+	write_iter(cachePoolf, dValue["cachePool"], dLock["cachePool"])
+	logger.info("Nest: dump fail pool")
+	write_iter(failPoolf, dValue["failPool"], dLock["failPool"], "a")
 
 def loadPool(fname):
+
 	rs = set()
 	with open(fname) as f:
 		for line in f:
@@ -35,6 +42,7 @@ def loadPool(fname):
 				tmp = tmp.decode("utf-8", "ignore")
 				if tmp not in rs:
 					rs.add(tmp)
+
 	return rs
 
 def addPool(dValue, dLock, cmd):
@@ -50,10 +58,11 @@ def addPool(dValue, dLock, cmd):
 
 	tmp = cmd.strip().split()
 	al = [unquote(tmpu) for tmpu in tmp[1:]]
-	if tmp[0] == "todo":
-		add_iter(al, dValue["todoPool"], dLock["todoPool"])
-	elif tmp[0] == "done":
-		add_iter(al, dValue["donePool"], dLock["donePool"])
+	key = tmp[0] + Pool
+	if key in dValue:
+		add_iter(al, dValue[key], dLock[key])
+	else:
+		logger.info("Illegal pool: " + tmp[0])
 
 def delPool(dValue, dLock, cmd):
 
@@ -68,10 +77,24 @@ def delPool(dValue, dLock, cmd):
 
 	tmp = cmd.strip().split()
 	al = [unquote(tmpu) for tmpu in tmp[1:]]
-	if tmp[0] == "todo":
-		del_iter(al, dValue["todoPool"], dLock["todoPool"])
-	elif tmp[0] == "done":
-		del_iter(al, dValue["donePool"], dLock["donePool"])
+	key = tmp[0] + "Pool"
+	if key in dValue:
+		del_iter(al, dValue[key], dLock[key])
+	else:
+		logger.info("Illegal pool: " + tmp[0])
+
+def mergePool(dValue, dLock, cmd):
+
+	tmp = cmd.strip().split()
+	srcPool = tmp[0] + "Pool"
+	tgtPool = tmp[-1] + "Pool"
+	if (srcPool != tgtPool) and (srcPool in dValue) and (tgtPool in dValue):
+		if dLock[srcPool].acquire(block=True, timeout = lock_Timeout) and dLock[tgtPool].acquire(block=True, timeout = lock_Timeout):
+			dValue[tgtPool] |= dValue[srcPool]
+		else:
+			logger.info("Fail to merge the Pool.")
+	else:
+		logger.info("Illegal command.")
 
 class Nest():
 
@@ -118,6 +141,8 @@ class Nest():
 				addPool(self.dValue, self.dLock, cmd[9:])
 			elif cmd.startswith("del pool"):
 				delPool(self.dValue, self.dLock, cmd[9:])
+			elif cmd.startswith("merge pool"):
+				mergePool(self.dValue, self.dLock, cmd[11:])
 			elif (cmd == "exit") or (cmd == "q"):
 				self.stop()
 				dumpPool(self.dValue, self.dLock)
@@ -129,16 +154,26 @@ if __name__ == "__main__":
 				seeds.add(seed)
 	if checkFS(todoPoolf):
 		seeds |= loadPool(todoPoolf)
+	if checkFS(cachePoolf):
+		seeds |= loadPool(cachePoolf)
 	if checkFS(donePoolf):
 		doneP = loadPool(donePoolf)
 	else:
 		doneP = set()
+	if checkFS(failPoolf):
+		failP = loadPool(failPoolf)
+	else:
+		failP = set()
 	with Manager() as manager:
 		dValue = manager.dict()
 		dValue["todoPool"] = seeds
 		dValue["donePool"] = doneP
+		dValue["cachePool"] = set()
+		dValue["failPool"] = failP
 		dLock = manager.dict()
 		dLock["todoPool"] = Lock()
 		dLock["donePool"] = Lock()
+		dLock["cachePool"] = Lock()
+		dLock["failPool"] = Lock()
 		nest = Nest(dValue, dLock)
 		nest.launch()

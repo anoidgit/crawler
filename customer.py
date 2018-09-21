@@ -7,8 +7,10 @@ taskid = "debug"
 
 seeds = set([])
 
-todoPoolf = ""
-donePoolf = ""
+todoPoolf = "todo.pool"
+donePoolf = "done.pool"
+cachePoolf = "cache.pool"
+failPoolf = "fail.pool"
 
 num_Process = 8
 num_threads = 2
@@ -96,3 +98,8 @@ def unquote_set(setin):
 	return rs
 
 seeds = unquote_set(seeds)
+
+todoPoolf = pwork + todoPoolf
+donePoolf = pwork + donePoolf
+cachePoolf = pwork + cachePoolf
+failPoolf = pwork + failPoolf
