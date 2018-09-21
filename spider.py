@@ -33,18 +33,18 @@ class Spider():
 		url_ext = URLExtractor()
 		while self.working:
 
-			if dLock["todoPool"].acquire(block=True, timeout = lock_Timeout):
+			if dLock["todoPool"].acquire(block = True, timeout = lock_Timeout):
 				url = None
 				if len(dValue["todoPool"]) > 0:
 					url = dValue["todoPool"].pop()
 				dLock["todoPool"].release()
 				if url is not None:
-					if dLock["cachePool"].acquire(block=True, timeout = lock_Timeout):
+					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
 						dValue.["cachePool"].add(url)
 						dLock["cachePool"].release()
 					else:
 						logger.info(self.prompt + "Fail to add %s to cache Pool." % (url))
-					if dLock["failPool"].acquire(block=True, timeout = lock_Timeout):
+					if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
 						dValue.["failPool"].add(url)
 						dLock["failPool"].release()
 					else:
@@ -67,13 +67,13 @@ class Spider():
 				urls = exter.extract(data, proto_prefix, host)
 				if urls:
 					todo = []
-					if dLock["donePool"].acquire(block=True, timeout = lck_timeout):
+					if dLock["donePool"].acquire(block = True, timeout = lck_timeout):
 						for url in urls:
 							if not url in dValue["donePool"]:
 								todo.append(url)
 						dLock["donePool"].release()
 						if todo:
-							if dLock["todoPool"].acquire(block=True, timeout = lck_timeout):
+							if dLock["todoPool"].acquire(block = True, timeout = lck_timeout):
 								for url in urls:
 									if not url in dValue["todoPool"]:
 										dValue["todoPool"].add(url)
@@ -87,14 +87,14 @@ class Spider():
 
 			saveURL(real_url, data, "utf-8")
 			if success_ext:
-				if dLock["donePool"].acquire(block=True, timeout = lck_timeout):
+				if dLock["donePool"].acquire(block = True, timeout = lck_timeout):
 					dValue["donePool"].add(real_url)
 					dLock["donePool"].release()
-					if dLock["cachePool"].acquire(block=True, timeout = lock_Timeout):
+					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
 						if url in dValue.["cachePool"]:
 							dValue.["cachePool"].remove(url)
 						dLock["cachePool"].release()
-						if dLock["failPool"].acquire(block=True, timeout = lock_Timeout):
+						if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
 							if url in dValue.["failPool"]:
 								dValue.["failPool"].remove(url)
 							dLock["failPool"].release()
