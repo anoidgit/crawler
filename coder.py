@@ -10,5 +10,5 @@ def decBytes(bytes_in, pdec = 0.8, ignore_err = True):
 	encm, p = getEnc(bytes_in)
 	if p >= pdec:
 		return bytes_in.decode(encm, ignore = ignore_err), True, encm, p
-	else
+	else:
 		return bytes_in, False, encm, p
