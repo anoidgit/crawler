@@ -20,7 +20,7 @@ class Spider():
 		while self.working:
 			if len(threading.enumerate()) < num_threads:
 				# not sure about whether self should be passed to the call to t_core or not
-				tmp = threading.Thread(target = t_core, args = (self, dValue, dLock,))
+				tmp = threading.Thread(target = self.t_core, args = (dValue, dLock,))
 				tmp.start()
 		for tmp in threading.enumerate():
 			tmp.join(3.0)
