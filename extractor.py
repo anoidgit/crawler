@@ -8,7 +8,7 @@ from customer import legal_Tag, is_OmmitedURL, legal_URL
 class URLParser(HTMLParser):
 
 	def __init__(self):
-		super(URLExtractor, self).__init__()
+		super(URLParser, self).__init__()
 		self.urls = set()
 
 	def handle_starttag(self, tag, attrs):
