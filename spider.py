@@ -40,12 +40,12 @@ class Spider():
 				dLock["todoPool"].release()
 				if url is not None:
 					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
-						dValue.["cachePool"].add(url)
+						dValue["cachePool"].add(url)
 						dLock["cachePool"].release()
 					else:
 						logger.info(self.prompt + "Fail to add %s to cache Pool." % (url))
 					if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
-						dValue.["failPool"].add(url)
+						dValue["failPool"].add(url)
 						dLock["failPool"].release()
 					else:
 						logger.info(self.prompt + "Fail to add %s to fail Pool." % (url))
@@ -91,12 +91,12 @@ class Spider():
 					dValue["donePool"].add(real_url)
 					dLock["donePool"].release()
 					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
-						if url in dValue.["cachePool"]:
-							dValue.["cachePool"].remove(url)
+						if url in dValue["cachePool"]:
+							dValue["cachePool"].remove(url)
 						dLock["cachePool"].release()
 						if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
-							if url in dValue.["failPool"]:
-								dValue.["failPool"].remove(url)
+							if url in dValue["failPool"]:
+								dValue["failPool"].remove(url)
 							dLock["failPool"].release()
 						else:
 							logger.info(self.prompt + "Fail to remove %s from fail Pool." % (url))
