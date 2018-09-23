@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from sys import argv
-from multiprocessing import Manager, Process, Lock
+from multiprocessing import Manager, Process
 from urllib.parse import unquote
 
 from os.path import exists as checkFS
@@ -171,9 +171,9 @@ if __name__ == "__main__":
 		dValue["cachePool"] = set()
 		dValue["failPool"] = failP
 		dLock = manager.dict()
-		dLock["todoPool"] = Lock()
-		dLock["donePool"] = Lock()
-		dLock["cachePool"] = Lock()
-		dLock["failPool"] = Lock()
+		dLock["todoPool"] = manager.Lock()
+		dLock["donePool"] = manager.Lock()
+		dLock["cachePool"] = manager.Lock()
+		dLock["failPool"] = manager.Lock()
 		nest = Nest(dValue, dLock)
 		nest.launch()
