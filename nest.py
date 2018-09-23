@@ -115,7 +115,7 @@ class Nest():
 
 		for i in range(num_Process):
 			# not sure about whether self should be passed to the call to launch_core or not
-			p = Process(target = launch_one, args = (self, i, self.dValue, self.dLock,))
+			p = Process(target = self.launch_one, args = (i, self.dValue, self.dLock,))
 			pl.append(p)
 			p.start()
 
