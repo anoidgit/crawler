@@ -113,7 +113,7 @@ class Nest():
 
 	def launch(self):
 
-		for i in xrange(num_Process):
+		for i in range(num_Process):
 			# not sure about whether self should be passed to the call to launch_core or not
 			p = Process(target = launch_one, args = (self, i, self.dValue, self.dLock,))
 			pl.append(p)
