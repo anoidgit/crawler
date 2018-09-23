@@ -7,7 +7,7 @@ from os import makedirs as mkdir
 
 def prepare_path(path):
 	if not checkFS(path):
-		mkdir(path, 0666)
+		mkdir(path, 0o666)
 
 def saveURL(url, data, encode_method = None, ignore_werr = True):
 	path, fwrt = URL2File(url)
