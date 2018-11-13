@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from sys import argv
-from multiprocessing import Manager, Process
+from multiprocessing import Lock, Process
 from urllib.parse import unquote
+
+import zmq
 
 from time import sleep
 
 from os.path import exists as checkFS
 
-from customer import seeds, num_Process, num_threads, pwork, logger, todoPoolf, donePoolf, cachePoolf, failPoolf
+from customer import seeds, num_Process, num_threads, pwork, logger, todoPoolf, donePoolf, cachePoolf, failPoolf, server_address
 
 from spider import Spider
 
@@ -100,23 +102,38 @@ def mergePool(dValue, dLock, cmd):
 
 class Nest():
 
-	def __init__(self, dValue, dLock):
+	def __init__(self, dValue, dLock, saddr):
 
 		self.dValue = dValue
 		self.dLock = dLock
 		self.spiders = []
 		self.pl = []
+		self.addr = saddr
 
 	def launch_one(self, inds):
 
 		tmp = Spider("p_"+str(inds))
 		self.spiders.append(tmp)
-		tmp.launch(self.dValue, self.dLock, num_threads = num_threads + 1, t_check = 3.0)
+		tmp.launch(num_threads = num_threads + 1, t_check = 3.0)
+
+	def launch_server(self):
+		context = zmq.Context()
+		socket = context.socket(zmq.PUB)
+		socket.bind(self.addr)
+		while self.run:
+			try:
+				req = socket.recv_json()
+			except Exception as e:
+				logger.info(e)
+			socket.send_json(self.handle(req))
+		socket.close()
 
 	def launch(self):
-
+		self.run = True
+		p = Process(target = self.launch_one)
+		p.start()
+		self.pl.append(p)
 		for i in range(num_Process):
-			# not sure about whether self should be passed to the call to launch_core or not
 			p = Process(target = self.launch_one, args = (i,))
 			self.pl.append(p)
 			p.start()
@@ -172,16 +189,15 @@ if __name__ == "__main__":
 		failP = loadPool(failPoolf)
 	else:
 		failP = set()
-	with Manager() as manager:
-		dValue = manager.dict()
-		dValue["todoPool"] = seeds
-		dValue["donePool"] = doneP
-		dValue["cachePool"] = set()
-		dValue["failPool"] = failP
-		dLock = manager.dict()
-		dLock["todoPool"] = manager.Lock()
-		dLock["donePool"] = manager.Lock()
-		dLock["cachePool"] = manager.Lock()
-		dLock["failPool"] = manager.Lock()
-		nest = Nest(dValue, dLock)
-		nest.launch()
+	dValue = {}
+	dValue["todoPool"] = seeds
+	dValue["donePool"] = doneP
+	dValue["cachePool"] = set()
+	dValue["failPool"] = failP
+	dLock = {}
+	dLock["todoPool"] = Lock()
+	dLock["donePool"] = Lock()
+	dLock["cachePool"] = Lock()
+	dLock["failPool"] = Lock()
+	nest = Nest(dValue, dLock, server_address)
+	nest.launch()

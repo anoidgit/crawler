@@ -16,4 +16,7 @@ def saveURL(url, data, encode_method = None, ignore_werr = True):
 		if encode_method is None:
 			f.write(data)
 		else:
-			f.write(data.encode(encode_method, ignore = ignore_werr))
+			if ignore_werr:
+				f.write(data.encode(encode_method, "ignore"))
+			else:
+				f.write(data.encode(encode_method))

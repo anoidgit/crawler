@@ -42,13 +42,17 @@ def getHeaders(url):
 
 def getData(url, timeout = 3.0, retry = 1):
 	heads, proto_prefix, host = getHeaders(url)
-	url = quote(url)
+	ind = url.find("://") + 3
+	if ind > 3:
+		url = url[:ind] + quote(url[ind:])
+	else:
+		url = "http://" + quote(url)
 	req = Request(url, headers = heads)
 	real_url = url
 	infos = None
 	http_code = 600
 	data = None
-	for i in xrange(retry):
+	for i in range(retry):
 		with urlopen(req, timeout = timeout) as f:
 			real_url = f.geturl()
 			infos = f.info()

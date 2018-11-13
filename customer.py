@@ -12,8 +12,10 @@ donePoolf = "done.pool"
 cachePoolf = "cache.pool"
 failPoolf = "fail.pool"
 
-num_Process = 8
-num_threads = 2
+num_Process = 2
+num_threads = 4
+
+server_address = "tcp://*:5556"
 
 pwork = "storage" + path_sep + taskid + path_sep
 
@@ -39,6 +41,7 @@ def URL2File(url):
 	url = url.replace("/", path_sep)
 	path = pwork + url[:ind]
 	fwrt = pwork + url
+	return path, fwrt + ".crawl"
 
 def is_WebPage(url, real_url = None):
 
@@ -72,8 +75,12 @@ def legal_Tag(tag):
 		return False
 
 def is_OmmitedURL(url):
-
-	if url.startswith("/") and (url[1] != '/'):
+	if url.startswith("/"):
+		if len(url) > 1:
+			if url[1] != '/':
+				return True
+			else:
+				return False
 		return True
 	else:
 		return False
@@ -81,7 +88,6 @@ def is_OmmitedURL(url):
 # To limit the range of websites downloaded by re-implementing this function
 # Every URL will be retrieved in current setting
 def legal_URL(url, proto_prefix, host):
-
 	return True
 
 # To limit the range of websites belong which the urls will be extracted

@@ -36,6 +36,8 @@ class URLExtractor():
 
 		self.extractor.feed(data)
 		for url in self.extractor.urls:
+			if url.startswith("//"):
+				url = "http:" + url
 			if is_OmmitedURL(url):
 				url = prefixes + url
 			if legal_URL(url, proto_prefix, host):

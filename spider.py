@@ -2,6 +2,8 @@
 
 import threading
 
+from time import sleep
+
 from customer import logger, extract_Page
 
 from retriever import getURL
@@ -22,6 +24,7 @@ class Spider():
 				# not sure about whether self should be passed to the call to t_core or not
 				tmp = threading.Thread(target = self.t_core, args = (dValue, dLock,))
 				tmp.start()
+				sleep(3.0)
 		for tmp in threading.enumerate():
 			tmp.join(3.0)
 
@@ -33,28 +36,28 @@ class Spider():
 		url_ext = URLExtractor()
 		while self.working:
 
-			if dLock["todoPool"].acquire(block = True, timeout = lock_Timeout):
+			if dLock["todoPool"].acquire(timeout = lock_Timeout):
 				url = None
 				if len(dValue["todoPool"]) > 0:
 					url = dValue["todoPool"].pop()
 				dLock["todoPool"].release()
 				if url is not None:
-					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
+					if dLock["cachePool"].acquire(timeout = lock_Timeout):
 						dValue["cachePool"].add(url)
 						dLock["cachePool"].release()
 					else:
 						logger.info(self.prompt + "Fail to add %s to cache Pool." % (url))
-					if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
+					if dLock["failPool"].acquire(timeout = lock_Timeout):
 						dValue["failPool"].add(url)
 						dLock["failPool"].release()
 					else:
 						logger.info(self.prompt + "Fail to add %s to fail Pool." % (url))
-					processURL(url, dValue, dLock, url_ext, lock_Timeout)
+					self.processURL(url, dValue, dLock, url_ext, lock_Timeout)
 
 			else:
 				logger.info(self.prompt + "Fail to get the lock of to-do Pool.")
 
-	def processURL(url, dValue, dLock, exter, lck_timeout = 3.0):
+	def processURL(self, url, dValue, dLock, exter, lck_timeout = 3.0):
 
 		data, proto_prefix, host, real_url, http_code, infos, is_Decoded, encode_method, confidence = getURL(url)
 		if data is not None:
@@ -67,13 +70,13 @@ class Spider():
 				urls = exter.extract(data, proto_prefix, host)
 				if urls:
 					todo = []
-					if dLock["donePool"].acquire(block = True, timeout = lck_timeout):
+					if dLock["donePool"].acquire(timeout = lck_timeout):
 						for url in urls:
 							if not url in dValue["donePool"]:
 								todo.append(url)
 						dLock["donePool"].release()
 						if todo:
-							if dLock["todoPool"].acquire(block = True, timeout = lck_timeout):
+							if dLock["todoPool"].acquire(timeout = lck_timeout):
 								for url in urls:
 									if not url in dValue["todoPool"]:
 										dValue["todoPool"].add(url)
@@ -87,14 +90,14 @@ class Spider():
 
 			saveURL(real_url, data, "utf-8")
 			if success_ext:
-				if dLock["donePool"].acquire(block = True, timeout = lck_timeout):
+				if dLock["donePool"].acquire(timeout = lck_timeout):
 					dValue["donePool"].add(real_url)
 					dLock["donePool"].release()
-					if dLock["cachePool"].acquire(block = True, timeout = lock_Timeout):
+					if dLock["cachePool"].acquire(timeout = lck_timeout):
 						if url in dValue["cachePool"]:
 							dValue["cachePool"].remove(url)
 						dLock["cachePool"].release()
-						if dLock["failPool"].acquire(block = True, timeout = lock_Timeout):
+						if dLock["failPool"].acquire(timeout = lck_timeout):
 							if url in dValue["failPool"]:
 								dValue["failPool"].remove(url)
 							dLock["failPool"].release()
